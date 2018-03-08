@@ -11,7 +11,7 @@ func foo() {
 }
 ```
 
-[홈](Readme.md)
+[홈](README.md)
 
 
 ---
