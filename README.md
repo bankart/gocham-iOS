@@ -6,6 +6,7 @@
 4. [How is memory management handled on iOS?](4_Memory_handling_is/4번_질의에_대한_답.md)
 5. [What do you know about singletons? Where would you use one and where would you not?](5_Singleton_is/5번_질의에_대한_답.md)
 6. Could you explain what the difference is between Delegate and KVO?
-7. What design patterns are commonly used in iOS apps?
+7. [What design patterns are commonly used in iOS apps?](7-8_Common_Design_Pattern_is/7-8번_질의에_대한_답.md)
+8. [What are the design patterns besides common Cocoa patterns that you know of?](7-8_Common_Design_Pattern_is/7-8번_질의에_대한_답.md)
 
 
