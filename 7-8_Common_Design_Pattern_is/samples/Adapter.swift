@@ -104,3 +104,11 @@ class DrinkMarket {
     }
 }
 
+
+func testAdapter() {
+    print("\(#function)")
+    let drinkMarket = DrinkMarket()
+    drinkMarket.orderDrink(.coffee, drinkName: "americano")
+    drinkMarket.orderDrink(.juice, drinkName: "strawberry")
+}
+
