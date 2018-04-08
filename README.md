@@ -11,6 +11,9 @@
 8. [What are the design patterns besides common Cocoa patterns that you know of?](07-08_Common_Design_Pattern_is/7-8번_질의에_대한_답.md)
 9. [Could you explain and show examples of SOLID principles?](09_SOLID_Principle_is/9번_질의에_대한_답.md)
 10. [What options do you have for implementing storage and persistence on iOS?](10_Persistence_on_iOS_is/10번_질의에_대한_답.md)
+
+* * *
+
 99. [Extra](99_Extra)
 
 
