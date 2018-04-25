@@ -17,6 +17,9 @@
 14. How would you optimize scrolling performance of dynamically sized table or collection views?
 15. [How would you execute asynchronous tasks on iOS?](15_Asynchronous_tasks_are/15번_질의에_대한_답.md)
 16. [How do you manage dependencies?](16_Manage_dependencies_are/16번_질의에_대한_답.md)
+17. How do you debug and profile things on iOS?
+18. Do you have TDD experience? How do you unit and UI test on iOS?
+19. Do you code review and/or pair program?
 
 * * *
 
