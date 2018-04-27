@@ -59,3 +59,124 @@ viewWillAppear 와 viewDidAppear 사이에 viewWillLayoutSubviews, viewDidLayout
 
 
 
+
+
+
+
+
+ViewController loadView()
+ViewController viewDidLoad()
+ViewController viewWillAppear
+make label
+set label.backgroundColor
+set label.translatesAutoresizingMaskIntoConstraints
+    TestCell init(frame:)
+add label to TestCell
+set label.constraint >>>
+set label.constraint <<<
+make label
+set label.backgroundColor
+set label.translatesAutoresizingMaskIntoConstraints
+    TestCell init(frame:)
+add label to TestCell
+set label.constraint >>>
+set label.constraint <<<
+make label
+set label.backgroundColor
+set label.translatesAutoresizingMaskIntoConstraints
+    TestCell init(frame:)
+add label to TestCell
+set label.constraint >>>
+set label.constraint <<<
+make label
+set label.backgroundColor
+set label.translatesAutoresizingMaskIntoConstraints
+    TestCell init(frame:)
+add label to TestCell
+set label.constraint >>>
+set label.constraint <<<
+make label
+set label.backgroundColor
+set label.translatesAutoresizingMaskIntoConstraints
+    TestCell init(frame:)
+add label to TestCell
+set label.constraint >>>
+set label.constraint <<<
+make label
+set label.backgroundColor
+set label.translatesAutoresizingMaskIntoConstraints
+    TestCell init(frame:)
+add label to TestCell
+set label.constraint >>>
+set label.constraint <<<
+make label
+set label.backgroundColor
+set label.translatesAutoresizingMaskIntoConstraints
+    TestCell init(frame:)
+add label to TestCell
+set label.constraint >>>
+set label.constraint <<<
+make label
+set label.backgroundColor
+set label.translatesAutoresizingMaskIntoConstraints
+    TestCell init(frame:)
+add label to TestCell
+set label.constraint >>>
+set label.constraint <<<
+ViewController viewWillLayoutSubviews()
+ViewController viewDidLayoutSubviews()
+ViewController viewDidAppear
+ViewController viewWillLayoutSubviews()
+ViewController viewDidLayoutSubviews()
+ViewController viewWillLayoutSubviews()
+ViewController viewDidLayoutSubviews()
+
+
+
+
+
+
+destination is TestViewController
+TestViewController loadView()
+TestViewController viewDidLoad()
+add button to TestViewController
+make button
+    TestButton setNeedsDisplay()
+set button.translatesAutoresizingMaskIntoConstraints
+set button.title
+    TestButton setNeedsLayout()
+set button.backgroundColor
+set button.addTarget(:::)
+    TestButton didMoveToSuperview()
+set button.constraint >>>
+set button.constraint <<<
+ViewController viewWillDisappear
+TestViewController viewWillAppear
+TestViewController viewWillLayoutSubviews()
+    TestButton setNeedsLayout()
+    TestButton setNeedsLayout()
+    TestButton setNeedsLayout()
+TestViewController viewDidLayoutSubviews()
+TestViewController viewWillLayoutSubviews()
+TestViewController viewDidLayoutSubviews()
+TestViewController viewDidAppear
+ViewController viewDidDisappear
+
+
+
+
+
+    TestButton setNeedsLayout()
+    TestButton setNeedsLayout()
+TestViewController viewWillDisappear
+ViewController viewWillAppear
+ViewController viewDidAppear
+TestViewController viewDidDisappear
+TestViewController dimissed
+TestViewController deinit
+    TestButton didMoveToSuperview()
+    TestButton.deinit
+
+
+
+

@@ -36,7 +36,7 @@ size/position 등 layout 관련 변경 발생시 UIKit 은 layout 을 변경한�
 viewWillLayoutSubviews/viewDidLayoutSubviews 메서드에서 추가적으로 layout process 에 영향을 줄 수 있는 작업을 진행할 수 있다. viewWillLayoutSubviews 에서 add/remove views, update size/position for views, update constraint... 등을 수행할 수 있고, viewDidLayoutSubviews 에서는 table/collection view data 를 reload 하거나, 다른 view 의 content 를 update 그리고 최종적으로 view 의 size/position 을 조정할 수 있다.
 
 
-### tips for managine layout effectively
+### tips for managing layout effectively
 - Use Auto Layout: 다양한 사이즈의 화면 대응
 - Take advantage of the top and bottom layout guide: 항상 view 가 보이도록 도와줌. 상단은 navi/status bar, 하단은 tab/tool bar 를 고려한 값을 제공함
 - Remember to update constraint when adding/removing views
