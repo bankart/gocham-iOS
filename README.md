@@ -14,11 +14,11 @@
 11. [What options do you have for implementing networking and HTTP on iOS?](11_HTTP_implementing_options_are/11번_질의에_대한_답.md)
 12. [How and when would you need to serialize and map data on iOS?](12_When_you_need_to_serialize/12번_질의에_대한_답.md)
 13. [What are the options for laying out UI on iOS?](13_layout_options_are/13번_질의에_대한_답.md)
-14. How would you optimize scrolling performance of dynamically sized table or collection views?
+14. [How would you optimize scrolling performance of dynamically sized table or collection views?](14_Optimize_scrolling_is/14번_질의에_대한_답.md)
 15. [How would you execute asynchronous tasks on iOS?](15_Asynchronous_tasks_are/15번_질의에_대한_답.md)
 16. [How do you manage dependencies?](16_Manage_dependencies_are/16번_질의에_대한_답.md)
-17. How do you debug and profile things on iOS?
-18. Do you have TDD experience? How do you unit and UI test on iOS?
+17. [How do you debug and profile things on iOS?](17_Debug_and_profile/17번_질의에_대한_답.md)
+18. [Do you have TDD experience? How do you unit and UI test on iOS?](18_TDD_and_unitTest/18번_질의에_대한_답.md)
 19. Do you code review and/or pair program?
 
 * * *
