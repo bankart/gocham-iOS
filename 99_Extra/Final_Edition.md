@@ -151,11 +151,24 @@ func setMyValue(_ value: Int) {
 1. Stack: 계산 및 함수에서 사용하는 로컬 변수들이 저장되는 공간입니다.
 2. Heap: data 가 동적으로 할당되는 곳입니다. 예를 들어, 새로운 객체 생성시 heap 에 해당 객체에 대한 메모리가 할당됩니다. heap 에 존재하는 모든 것들은 생명주기가 있습니다.
 3. Global Data: global variables, string constants, type metadata 등..
+
+- Value Type
+    : 변수 할당시 stack 에 저장됩니다.
+    : 다른 변수에 할당될 때 값이 복사됩니다.(copy by value)
+    : 복사될 때 변수들이 분리되어 하나를 변경해도 다른 것들에는 영향이 없습니다.
+    : heap 에 저장되지 않기 때문에 reference counting 도 필요 없습니다.
+    : 다만 property 가 reference type 인 경우 문제가 있습니다.
+
+
+- Reference Type
+    : 인스턴스 생성시 reference 는 stack, 실제 값과 reference counting 은 heap 에서 처리됩니다. 
+    : 변수에 할당시 reference 가 하나 더 stack 에 생성되고, heap 에 있는 실제 값을 참조하면서 reference counting 이 증가합니다.
+
 - ibooks: how arc works
     : unsafe, Manual Memory Management 에서 찾아보면 알 수 있다.
 
 - autoreleasePool
-    : auto release pool 은 여전히 swift 에 존재한다.
+    : auto release pool 은 여전히 swift 에 존재합니다.
     : swift 에서 loop 돌면서 objc 객체를 생성하면 해당 loop 영역이 종료되는 시점에도 메모리 해제가 되지 않는다. 그럴때는 loop 블럭 내부에 autoreleasepool 을 생성해 줘야 깔끔하게 해제된다.
 
 
@@ -163,13 +176,161 @@ func setMyValue(_ value: Int) {
 
 * * *
 # 기본 타입들
-- class, struct(Int, Float, Double, Bool, String, Character, Array, Dictionary, Set ..), enum, tuple, optional
+- class, struct(Int, Float, Double, Bool, String, Character, Array, Dictionary, Set ..), enum, tuple, optional, closure ...
+
+- Value Type: struct, enum, tuple
+    - Copy Semantics: Deep Copy. 다른 변수에 할당시 새로운 인스턴스가 생성되어 전달됩니다.
+    - identity 가 아닌 value 가 중요합니다. 각 변수는 value 에 의해 구분되어야 하므로 Equtable 을 준수해야 합니다.
+    - thread safe 합니다.
+    - copy 는 정해진 시간(constant time) 안에 완료됩니다. 단 property 가 reference type 인 경우 예를 들어 String, Array, Set, Dictionary 등은 constant time + reference copy time 이 소요됩니다.
+    - 대신 COW(Copy On Write) 를 지원하므로 속도 저하를 보완합니다. (변수에 할당시 실제 복사가 일어나는 것이 아니라 할당된 변수에 변경이 일어나는 시점에 복사가 일어납니다.)
+    - let 으로 선언시 property 들도 immutable 입니다.
+
+- Reference Type: class, closure
+    - Copy Semantics: Shallow Copy. 다른 변수에 할당시 해당 인스턴스의 포인터 주소값만 전달되어 원본을 참조합니다.
+    - identity 가 중요합니다.
+    - let 으로 선언시 property 들은 mutable 입니다.
+    - Deep Copy 를 구현하고 싶으면 해당 클래스가 NSObject 를 상속받고, NSCopying 를 준수해야 합니다. Objective-C 에서처럼 copy(with:) 를 구현하는 거죠
+    - 또는 Copyable 같은 Protocol 을 선언하여 해당 protocol 에서 copy 하는 메서드를 구현하거나, 클래스를 Builder 나 Decorator 패턴을 적용한 것처럼 자기 자신 타입을 파라미터로 받는 private 생성자를 두고 copy 메서드에서 해당 생성자를 사용해 return 하는 방법도 있습니다. 하지만 Apple 에서는 참조타입에 대한 copy 를 권장하지 않습니다. 만약 copy 되어야 한다면 struct 로 구현해야 하는 것이 아닌지 더 따져봐야 합니다.
+
+- 데이터 전달시 원본 데이터 자체가 수정되어 각 화면에 반영되어야 한다면 참조 타입이어도 괜찮을 수 있지만 그렇지 않은 경우에는 데이터가 변경되면 문제가 발생하므로 상황에 따라 데이터 타입을 적절히 결정해야 합니다.
+
 
 
 
 
 * * *
+# Swift Perfomance
+위에서 설명한 메모리 + Value vs Reference 를 모두 고려해야 합니다.
+
+- 성능에 영향을 미치는 3가지
+    1. 메모리 할딩이 stack 인지, heap 인지
+    2. reference counting 이 필요하지 않은지, 필요한지
+    3. method dispatch 가 static 인지, dynamic 인지(메서드 호출을 compile time 에 하는지, run time 에 하는지)
+
+- heap 할당의 문제
+    : 할당시 빈 곳을 찾고 관리하는 것은 복잡한 과정이 필요합니다.
+    : 이 과정은 thread safe 해야 하기 때문에 lock 등 synchronization 동작은 성능의 저하를 가져옵니다.
+    : 반면 stack 할당은 stack 포인터 변수값만 변경하는 정도입니다. ([stack pointer 참조](http://hyem2.tistory.com/entry/%EC%8A%A4%ED%83%9D%ED%8F%AC%EC%9D%B8%ED%84%B0))
+
+- heap 할당 줄이기
+``` swift
+enum Color { case red, gree, blue }
+enum Theme { case eat, stay, play }
+
+var cache = [String: UIImage]()
+
+func makeMapMarker(color: Color, theme: Theme, selected: Bool) -> UIImage {
+	// 함수가 loop 안에서 빈번하게 호출되는 경우 key 생성시 heap 에 할당이 되므로 성능에 저하가 생깁니다.
+	let key = "\(color):\(theme):\(selected)"
+	if let image = cache[key] { return image }
+}
+
+// 위의 코드를 아래와 같이 바꾸어 heap 을 사용하지 않고 stack 만을 사용하므로 성능을 개선할 수 있습니다.
+struct Attribute: Hashable {
+	var color: Color
+	var theme: Theme
+	var selected: Bool
+}
+
+var cache = [Attribute: UIImage]()
+
+func makeMapMarker(color: Color, theme: Theme, selected: Bool) -> UIImage {
+	// 함수가 loop 안에서 빈번하게 호출되는 경우 key 생성시 heap 에 할당이 되므로 성능에 저하가 생깁니다.
+	let key = Attribute(color: color, theme: theme, selected: selected)
+	if let image = cache[key] { return image }
+}
+```
+
+- reference counting 의 문제
+    : 변수 copy 할 때마다 실행되므로 매우 빈번하게 실행됩니다.
+    : 그러나 가장 큰 문제는 count 를 atomic 하게 늘리고 줄여야하므로 결국 thread safe 하게 동작해야 하는 것입니다.
+
+- method dispatch (static)
+    : compile time 에 메소드의 실제 코드 위치를 안다면 run time 에 찾는 과정 없이 바로 해당 코드 주소로 점프할 수 있습니다. 컴파일러의 최적화, method inlining 이 가능합니다.
+    : method inlining
+        - 효과가 있다고 판단되는 경우 compile 시점에 method 호출 부분에 method 내용을 붙여 넣습니다.
+        - call stack 의 overhead 를 줄임으로써 CPU icache(instruction(명령어)-cache) 나 register(처리해야할 명령어를 저장하는 역할) 를 효율적으로 쓸 가능성이 있습니다. ([참조](https://namu.wiki/w/%EC%BA%90%EC%8B%9C%20%EB%A9%94%EB%AA%A8%EB%A6%AC))
+        - compiler 의 추가 최적화가 가능합니다.(최근 method 들이 작아지는 추세이므로 더더욱 기회가 많고, 특히나 loop 안에서 호출되는 경우 큰 효과를 볼 수 있습니다.)
+
+- method dispatch (dynamic)
+    1. reference semantics 에서의 다형성(Polymorphism)    
+         - super class 타입으로 생성된 sub class 들의 override 된 메서드 호출시 하위 클래스들 중 어느 클래스에서 호출된 것인지 어떻게 확인할 수 있을까요? Type Metadata 를 통해 확인할 수 있는데요. VWT(Value Witness Table) 이라는 것이 있는데 이 안에 vtable 및 allocating, copying, destroying 에 대한 기본 연산을 제공합니다. 그래서 이 VWT 안에 있는 vtable 을 통해 어떤 하위 클래스의 인스턴스가 메서드를 호출했는지 해당 vtable 에 저장된 메서드의 주소를 찾아서 호출을 해줍니다.    
+         - 실제 Type 을 compile time 에 알 수 없으므로 run time 에 해당 메서드의 주소를 찾아야하므로 compiler 가 최적화를 하지 못해 성능 저하를 불러올 수 있습니다.    
+    2. Objective-C 에서의 method dispatch    
+         - Message sending 방식입니다.    
+         - loop 안에서 빈번하게 메서드 호출이 일어나는 경우 성능저하를 불러올 수 있습니다.  
+
+         ```swift
+         [anObject doMethod: aParameter];
+         // 위의 경우 아래와 같이 동적으로 해당 메서드를 찾아서 호출합니다.
+         objc_msgSend(anObject, @selector(doMethod:), aParameter);
+         ```
+
+    3. Static Disaptch 로 강제하는 방법    
+         - final, private 등을 쓰는 버릇을 들입니다.    
+             : 해당 메서드, 프로퍼티 등은 상속되지 않으므로 static 하게 처리가 가능합니다.    
+         - dynamic 사용을 자제합니다.    
+         - Objc 연동을 최소화합니다.    
+         - 빌드 설정에서 WMO(Whole Module Optimzation: 빌드시 모든 파일을 분석하여 static dispatch 로 변환 가능한지 등을 판단하여 최적화, 빌드시 상당히 느리므로 debug 모드에서는 사용하지 않는 것이 좋습니다. Xcode7 에서는 불안정하여 사용을 권장하지 않았습니다. 이후 버전에 대해서는 확인이 필요합니다.) 옵션을 사용합니다.    
+
+- 성능에 영향을 미치는 3가지
+    1. memory allocation: *stack* or heap
+    2. reference counting: *no* or yes
+    3. method dispatch: *static* or dynamic     
+
+- 성능 개선을 위한 추상화 기법
+    - class: final, private 사용으로 method dispatch 를 static 하게 할 수 있습니다. (heap, yes, dynamic 을 heap, yes, static 로 개선시킬 수 있습니다.)
+    
+    - struct: property 로 reference type 을 가지고 있는 경우 copy 를 할 경우 reference type 의 properteis 수 만큰 reference counting 이 발생합니다. 이 경우 enum 등 value type 으로 대체 가능한 것들은 최대한 대체하고, 불가능한 것들은 하나의 class 로 몰아서 가능한 reference counting 횟수를 줄일 수 있는 방안을 모색해야 합니다.
+    (String 은 struct 로 value semantics 이지만 내부 storage 로 class 를 가지고 있으므로 copy 시 reference counting 이 동작합니다. Array, Dictionary 등도 마찬가지 입니다.)
+
+    - protocol type: value type 에서의 다형성을 구현한 경우, class 와 달리 할당 메모리 사이즈가 제각각인데 어떻게 하나의 대표 타입으로 stack 에 메모리를 할당할 수 있을까요? 그리고 class 의 상속을 통한 경우라면 인스턴스의 메서드를 호출할 때 vtable 을 이용하면 되는데 protocol 의 경우 어떻게 특정 value type 의 인스턴스 메서드를 호출할 수 있을까요?
+        - Existential Container: protocol type 의 실제 값을 넣고 관리하는 구조체라고 생각하면 됩니다. stack 에 생성됩니다.
+            - value buffer(3 words - 1 words 는 32bit cpu 에서는 32bit, 64bit cpu 에서는 64bit 입니다.) + fixed size(Metadata type 을 저장하는 공간) 로 구성되어 있습니다.
+            - 그렇기 때문에 properties 가 3개 이하인 경우 value buffer 에 해당 값을 저장하면 되지만, 3개를 초과하는 경우 value buffer 에 하나의 reference 를 생성하고 실제 값들은 heap 영역에 생성하게 됩니다.
+        
+        - VWT(Value Witness Table): Existential Container 생성/해제를 담당하는 인터페이스입니다. allocate, copy, destruct, deallocate 메서드들로 구성되어 있고, protocol 을 conform 하는 type 마다 모두 가지고 있습니다. Existential Container value buffer 다음 첫 번째 fixed size 영역에 위치합니다.
+             - 인스턴스를 복사하는 경우 allocate 메서드가 호출되고, properties 를 확인하여 value buffer 에 저장할지 reference 를 생성하고 실제 값을 heap 영역에 저장할지 결정합니다.
+             - 그 다음 copy 메서드가 호출되어 properties 들을 복사합니다.
+             - copy 가 완료된 뒤에는 destruct, deallocate 메서드가 차례로 호출되며 메모리를 해제합니다.
+        
+        - PWT(Protocol Witness Table): protocol type 의 method dispatch 를 위해 추상 메서드를 구현한 메서드에 대한 데이터를 저장하는 구조체로 protocol type 을 conform 하는 type 마다 가지고 있습니다. Existential Container VWT 다음 영역에 위치합니다.
+        
+        - 결과적으로 value type 이므로 값 전체가 복사되는데, 3 words 를 넘기지 않으면 Existential Container 생성 후 값을 복사하고, 3 words 를 넘기는 경우 heap 에 메모리 할당 후 해당 heap 을 복사하게 됩니다. heap 에 할당된 값들이 복사되므로 reference counting 이 발생하지 않습니다. copy 할 때마다 heap 을 복사하므로 큰 성능 저하를 불러옵니다. 성능 개선을 위해 indirect storage 를 적용합니다. 하나의 class 에 properties 를 몰아 넣고, 해당 class 를 property 로 취하는 방식입니다. 이렇게 되면 heap 복사보다는 성능 비용이 저렴한 referenece counting 을 발생시켜서 성능을 개선할 수 있지만 copy 된 인스턴스의 property 변경시 해당 property 의 reference 에 접근해 값을 변경하는 것이므로 원본의 값도 함께 변경되는 문제가 발생합니다. 이때는 COW 를 직접 구현하므로써 문제를 해결할 수 있습니다. (isKnownUniquelyReferenced(:) 메서드를 사용해 파라미터로 전달된 type 이 하나의 강한 참조만 가지고 있는지의 여부를 반환하는 함수입니다. ) 
+
+        - 3 words 이하는 stack, no, dynamic(PWT), 초과는 heap, no(value type 인 경우. referenece type 인 경우 yes), dynamic(PWT) 입니다.
+
+        - 초과인 경우 indirect storage 사용시 heap, yes, dynamic(PWT) 으로 성능을 개선시킬 수 있습니다.
+
+        - copy 만 하는 경우 성능은 class 와 같고, 변경하는 경우에만 COW 하기 때문에 전체적인 성능 저하를 최소화합니다. (String, Array, Dictionary 등도 이런 방식으로 value semantics 를 구현합니다.)
+
+    - generic type: generic method 에서 generic type 파라미터 는 정적 다형성이기 때문에 run time 에 값이 변경되지 않습니다. 그렇기 때문에 compile time 에 이미 정해진 type 에 대한 method dispatch 를 VWT, PWT 등을 이용하여 수행합니다. 하지만 성능 개선을 위해 각 type 별 메서드를 따로 구현하면 어떨까하는 생각을 가질 수 있지요. 그렇게 하면 복잡한 Existential Container 를 사용하지 않아도 되고 성능도 좋아지며 method dispatch 도 static 하게되어 inlining 이 가능해집니다(compiler 최적화 가능). 하지만 그렇게 한다면 뭐하러 generic method 를 구현할까요? 고맙게도 이런 상황에서는 compiler 가 알아서 이런 작업을 수행해줍니다. 이것을 Generic Specialization 이라고 합니다. final, private 등을 사용하거나 WMO 설정을 사용하면 됩니다.
+    	- 3 words 이하: 특수화 되지 않은 경우 stack, no, dynamic(PWT), 특수화된 경우 stack, no, static
+        - 3 words 초과: 특수화 되지 않은 경우 heap, no, dynamic(PWT)
+        - class type: 특수화된 경우 heap, yes, dynamic(vtable)
+
+- 결론
+    - Objective - C 에 비해 큰 성능 향상이 있습니다.
+    - 하지만 Value, Reference, Protocol type 등의 성격을 고려해야 그 혜택을 제대로 누릴 수 있습니다.
+    - 성능 최적화를 고려해야하는 경우는 
+        1. 렌더링 관련 로직 등 반복적으로 빈번히 호출되는 경우
+        2. 서버 환경에서의 대용량 데이터 처리하는 경우 등이 있습니다.
+    - struct 는 value semantic 이 필요한 경우, class 는 identity, oop, objective-c 와의 연동이 필요한 경우, generic 은 정적 다형성이 가능한 경우, protocol 은 동적 다형성이 필요한 경우에 사용하여 성능 최적화를 구현해야 합니다.
+
+
+
+* * *
 # Design Pattern
+## Class Diagram
+- open arrow head with solid line: Inheritance. reading this as 'inherits from', 'is a'
+- open arrow head with dotted line: Impletments Protocol, reading this as 'conforms to'
+- plain arrow head with solid line: Property, Assosiation, reading this as 'has a', has one or more expression = 1...*
+- plain arrow head with dotted line: Uses, Dependency
+    1. 약한 참조인 property 또는 delegate 인 경우
+    2. property 로 저장되지 않고 메서드의 파라미터로 전달되는 경우
+    3. IBAction 과 같이 느슨한 연결이거나 callback 인경우
+
 ## Creational Pattern(생성 패턴)
 - Abstract Factory, Builder, Factory Method, Prototype, Singleton
 
@@ -180,6 +341,9 @@ func setMyValue(_ value: Int) {
     : 상태 보관이 필요하면 싱글톤, 아니면 유틸리티 클래스
     : 유틸리티 클래스. 함수 호출시 사이드 이펙트가 없다면 어느정도의 디펜던시를 감수하더라도 사용할 만하다.
 
+### Singleton Plus
+- Singleton 과 마찬가지로 기본적으로 static 한 인스턴스도 제공하고, 사용자가 필요에 따라 인스턴스를 생성할 수 있는 interface 를 제공합니다. 예를 들면 FileManager 처럼 default property 로 singleton 인스턴스에 접근해 사용하거나, 직접 생성해 사용할 수도 있는 거지요.
+
 ### Factory Method
 - 일련의 클래스들 중 하나에서 객체를 인스턴스화하는 기능을 제공합니다.
 - 공통의 수퍼 클래스나, 프로토콜을 준수하는 일련의 클래스들 중 runtime 시 필요로 하는 클래스를 사용할 수 있도록 도와줍니다.
@@ -187,10 +351,11 @@ func setMyValue(_ value: Int) {
 ### Builder
 - 인스턴스 생성시 필요한 복잡한 작업들을 간소화하도록 도와줍니다.
 - 인스턴스에 다양한 프로퍼티가 존재할 때 특정 프러퍼티들을 설정하므로써 특성이 다른 인스턴스를 쉽게 생성해낼 수 있습니다.
+- 복잡한 인스턴스 생성을 한 번에 하는 대신 step-by-step 으로 생성하고자 할 때 사용합니다.
 
 
 ## Structural Pattern(구조 패턴)
-- Adaptor, Bridge, Composite, Decorator, Facade, Flyweight, Proxy
+- Adaptor, Bridge, Composite, Decorator, Facade, Flyweight, MVC, Proxy
 
 ### Adaptor
 - interface 가 상이한 클래스간 호환성을 위해 Wrapper 를 생성하여 클래스간 소통할 수 있도록 합니다.
@@ -229,15 +394,23 @@ func setMyValue(_ value: Int) {
 ### Memento
 - 객체를 이전 상태로 복원할 수 있는 기능을 제공해줍니다.
 - 객체의 원본 상태 그대로를 가지는 originator 를 가지고, 외부로 스냅샷을 제공하는 클래스(memento)를 추가합니다. caretaker 를 통해 이전상태를 복원할 수 있습니다.
+- originator: Codable 을 준수하는 모델 객체
+- memento: Data 객체
+- caretaker: decoder, encoder 를 가지고 저장/복원하는 manager 객체
 
 ### Observer
 - 어떤 객체의 상태가 바뀌면 관련된 모든 객체들이 자동으로 갱신되도록 객체들간의 링크를 정의합니다.
+- 주로 MVC 와 함께 사용됩니다. view controller 가 observer 가 되고, model 이 subject 가 되어 view controller 의 type 이 무엇이든 상관하지 않고 서로 소통할 수 있습니다.
 - swift 에서 일대다 옵저버는 notification, kvo, 일대일 옵저버는 delegate 가 있습니다.
+    - kvo 를 사용하기 위해서는 NSObject 를 상속받아 Objective-C 레이어에 접근해야 한다는 단점이 있습니다. 하지만 직접 Observable Wrapper 를 구현해서 사용해도 무방합니다.(구현방법이 복잡하므로 그냥 NSObject 상속받고 kvo 사용하는게 정신 건강에 이로울듯 합니다.)
+    - delegate 패턴을 사용하면 대규모 클래스를 분할하거나, 일반적이고 재사용 가능한 component 를 생성할 수 있습니다. UIKit 전체에서 공통적으로 보여지는 패턴으로 애플은 data 를 준비하기 위한 -DataSource, data 를 전달 받거나, event 관련된 처리를 하는 -Delegate 로 나누어 구현하였습니다.
+    - delegate 는 매우 유용하지만 과용하면 너무 많은 delegate 들이 생성되는 문제가 발생합니다. 이런 경우 해당 개체가 너무 많은 기능을 담고 있는 것은 아닌지 검토해서 가능하다면 기능을 쪼개는 것이 좋습니다. 그리고 delegate 가 너무 작은 기능을 담당해서 그 수가 많아진 것은 아닌지도 검토해볼 필요가 있습니다. 그렇다면 용도에 맞게 다시 기능을 분류하고 delegate 들을 통합할 필요가 있습니다.
 
 ### Strategy
-- 객체들에 서로 다른 알고리즘이 적용되어야 할 때 사용합니다.
-- 알고리즘의 집합을 정의하고 이들을 필요에 따라 교체할 수 있도록 구현합니다.
-- 클라이언트와 알고리즘을 서로 독집적으로 만듭니다.
+- 객체들에 서로 다른 행위가(알고리즘이) 적용되어야 할 때 사용합니다.
+- 행위(알고리즘)의 집합을 정의하고 이들을 필요에 따라 교체할 수 있도록 구현합니다.
+- 클라이언트와 행위를(알고리즘을) 서로 독집적으로 만듭니다.
+- protocol 을 이용하여 구현할 경우 delegate 와 유사해 보이지만, delegate 와 다르게 protocol 을 준수하는 객체들의 집합을 이용하여 runtime 에 쉽게 변경 가능하다는 차이점이 있습니다.
 
 ### State
 - 객체가 내부 상태(Context)에 따라 서로 다른 방식으로 동작하도록 합니다.
@@ -477,11 +650,47 @@ AppDelegate {
 ```
 
 ### change onrientation with single view
+- project 설정에서 device orientation 을 portrait 전용으로 설정합니다.
+- AppDelegate 에서 아래와 같은 코드를 작성해 줍니다.
+
+``` swift
+protocol CanRotateVC {}
+
+func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+    if let rootVC = topViewController(for: window?.rootViewController) {
+        if rootVC is CanRotateVC {
+            return .allButUpsideDown
+        }
+    }
+    return .portrait
+}
+
+private func topViewController(for rootViewController: UIViewController?) -> UIViewController? {
+    guard let rootVC = rootViewController else {
+        return nil
+    }
+    if rootVC.isKind(of: UITabBarController.self) {
+        return topViewController(for: (rootVC as! UITabBarController).selectedViewController)
+    } else if rootVC.isKind(of: UINavigationController.self) {
+        return topViewController(for: (rootVC as! UINavigationController).visibleViewController)
+    } else if rootVC.presentedViewController != nil {
+        return topViewController(for: rootVC.presentedViewController)
+    } else {
+        return rootVC
+    }
+}
+
+class ViewController: UIViewController, CanRotateVC {
+
+}
+```
+
 [link](http://www.jairobjunior.com/blog/2016/03/05/how-to-rotate-only-one-view-controller-to-landscape-in-ios-slash-swift/)
 
 
 ### handle orientation
 - viewController 의 shouldAutorotate 가 true 인 경우 아래의 메서드를 override 하는 방식으로 제어할 수 있습니다.
+
 ``` swift
 override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
 	if UIDevice.current.orientation.isLandscape {
@@ -493,6 +702,7 @@ override func viewWillTransition(to size: CGSize, with coordinator: UIViewContro
 ```
 
 - 내장 카메라 애플리케이션 처럼 기본 layout 은 변경하지 않고 버튼들 과 내부 상태만 변경하려면 shouldAotorotate 는 false 로 변경하고, notification 을 등록하여 제어합니다.
+
 ``` swift
 override func viewDidLoad() {
 	...
@@ -511,7 +721,6 @@ func handleRotate() {
 	}
 }
 ```
-
 
 [link](https://stackoverflow.com/questions/38894031/swift-how-to-detect-orientation-changes)
 
