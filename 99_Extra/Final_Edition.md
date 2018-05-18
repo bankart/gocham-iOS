@@ -36,6 +36,8 @@ collectionView.cells.element(boundBy: 5).swipeUp()
 
 그러나 iOS UI 개발에 있어서 세세한 테스트 케이스의 작성은 현실적으로 힘든 점이 있습니다. model 이나 business logic 의 경우라면 Unit 테스트 케이스를 작성할만 하지만 일반적인 UI 에 맞춰 케이스를 작성한다는건 꽤나 지루하고 고통스러운 작업이겠죠...
 
+다행히 UI test 함수에서 화면을 기록하며 해당 행위를 코드로 작성해주는 기능이 있습니다. 기본적인 case 는 화면 기록으로 작성하고 추후 각 코드를 customizing 하면 좀 더 수월하게 테스트를 진행할 수 있습니다.
+
 [RWDevcon UI Testing 및 Accessibility 를 자세히 설명하는 영상 링크(목소리와 발음으로 추측컨데.... WWDC 2017 Building Visually Rich User Experiences 에서 강연한 여자인 듯 함)](https://youtu.be/NrHSZgbQ7_k)
 
 #### Quick/Nimble
