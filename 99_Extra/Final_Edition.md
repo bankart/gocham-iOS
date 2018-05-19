@@ -52,13 +52,13 @@ CXTest 를 기반으로 만들어진 테스트 환경을 제공합니다. 테스
  애플리케이션을 실행하는데 필요한 모든 것이 포함되어 있으며, stack, heap 및 기타 모든 리소스도 포함됩니다. iOS 는 멀티테스킹을 지원하지만 애플리케이션은 단 하나의 process 만을 가집니다. 반면 macOS 는 Process 객체를 생성해서 사용할 수 있습니다.
 
 ### Thread
- 작은 process 라고 생각하면 됩니다. process 와 달리 thread 는 메모리를 자신의 부모 process 와 공유합니다. 이로 인해 하나의 변수는 여러개의 thread 로부터 data races 당할 수 있습니다. 즉 값을 읽어들일 때 원치 않는 결과가 나올 수 있습니다. thread 는 iOS 에서 제한된 리소스입니다. process 하나당 64개의 thread 를 생성할 수 있지만 일반적으로 그럴만한 일은 거의 없습니다.
+ 작은 process 라고 생각하면 됩니다. process 내에서 실행되는 흐름의 단위를 말합니다. process 와 달리 thread 는 메모리를 자신의 부모 process 와 공유합니다. 이로 인해 하나의 변수는 여러개의 thread 로부터 data races 당할 수 있습니다. 즉 값을 읽어들일 때 원치 않는 결과가 나올 수 있습니다. thread 는 iOS 에서 제한된 리소스입니다. process 하나당 64개의 thread 를 생성할 수 있지만 일반적으로 그럴만한 일은 거의 없습니다.
 
 ### Dispatch Queues
  위와 같은 환경에서 코드를 동시에 동작시키기 위한 옵션이 필요한데 그게 바로 Dispatch Queues 입니다. queue 에 task 를 추가하면 어느 시점엔가 실행되도록 할 수 있습니다. queue 에는 몇가지 종류가 있는데, 바로 serial, concurrent queue 입니다. serial queue 는 queue 에 task 를 추가한 순서대로 각 task 가 진행 및 마무리 됩니다., concurrent 는 각 task 의 종료를 기다리지 않고 추가된 순서대로 실행시켜서 동시에 여러가지 작업을 진행할 수 있습니다.
 
 ### Operation Queues
- Dispatch Queue 를 OOP 적으로 wrapping 한 개체입니다. 간단하게 block 으로 사용할 수도 있고 의존성 주입으로 작업의 선/후행을 정할 수도 있습니다. 그리고 실행되기 전에 cancel 할 수도 있지만 해당 기능을 사용하려면 Operation 을 sub classing 해서 구현해야 합니다.
+ Dispatch Queue 를 OOP 적으로 wrapping 한 개체입니다. 간단하게 block 으로 사용할 수도 있고 의존성 주입으로 작업의 선/후행을 정할 수도 있습니다. 그리고 실행되기 전에 cancel 하려면 Operation 을 sub classing 해서 구현해야 합니다.
 
 ### Run Loops
  위에 설명한 Queues 와 유사합니다. 시스템은 모든 작업을 queue 에 넣고 모든 작업을 실행한 다음 다시 처음부터 시작합니다. 예를 들면 화면을 redraw 하는 과정은 Run Loop 에 의해 동작합니다. Run Loop 는 concurrecy 를 위한 방법은 아닙니다. 오히려 하나의 thread 에 묶여 있습니다. 그렇다고 모든 thread 에 run loop 가 있는건 아니고 요청이 있을 경우 처음으로 생성됩니다. run loop 는 input source 가 있는 경우에만 계속 동작할 수 있습니다. 그렇지 않으면 실행된 모든 작업들이 즉시 종료됩니다.
@@ -180,7 +180,11 @@ func setMyValue(_ value: Int) {
 
 * * *
 # 기본 타입들
-- class, struct(Int, Float, Double, Bool, String, Character, Array, Dictionary, Set ..), enum, tuple, optional, closure ...
+- class, struct(Int, Float, Double, Bool, String, Character, Array, Dictionary, Set ..), enum, tuple, optional, function ...
+
+- named type: classes, structures, enumerations, protocols
+- data type: 다른 언어의 primative type 에 해당하지만 swift 에서는 named type 인 structure 입니다. numbers, characters, strings...
+- compound type: function, tuple. compound type 은 named type 과 compound type 을 포함할 수 있습니다.
 
 - Value Type: struct, enum, tuple
     - Copy Semantics: Deep Copy. 다른 변수에 할당시 새로운 인스턴스가 생성되어 전달됩니다.
@@ -190,7 +194,7 @@ func setMyValue(_ value: Int) {
     - 대신 COW(Copy On Write) 를 지원하므로 속도 저하를 보완합니다. (변수에 할당시 실제 복사가 일어나는 것이 아니라 할당된 변수에 변경이 일어나는 시점에 복사가 일어납니다.)
     - let 으로 선언시 property 들도 immutable 입니다.
 
-- Reference Type: class, closure
+- Reference Type: class, function
     - Copy Semantics: Shallow Copy. 다른 변수에 할당시 해당 인스턴스의 포인터 주소값만 전달되어 원본을 참조합니다.
     - identity 가 중요합니다.
     - let 으로 선언시 property 들은 mutable 입니다.
@@ -339,6 +343,8 @@ func makeMapMarker(color: Color, theme: Theme, selected: Bool) -> UIImage {
 - Abstract Factory, Builder, Factory Method, Prototype, Singleton
 
 ### Singleton
+<img src="img/singleton.png" width="250px"><br>
+
 - 클래스에 대해 단 하나의 인스턴스만을 제공합니다.
 - 물리적 혹은 개념적으로 유니크하게 매핑되는 경우 싱글톤으로 만드는게 좋습니다.
 - 스태틱 펑션만 존재하는 클래스(유틸리티 펑션의 모음 클래스) 과 싱글턴의 차이?
@@ -349,10 +355,14 @@ func makeMapMarker(color: Color, theme: Theme, selected: Bool) -> UIImage {
 - Singleton 과 마찬가지로 기본적으로 static 한 인스턴스도 제공하고, 사용자가 필요에 따라 인스턴스를 생성할 수 있는 interface 를 제공합니다. 예를 들면 FileManager 처럼 default property 로 singleton 인스턴스에 접근해 사용하거나, 직접 생성해 사용할 수도 있는 거지요.
 
 ### Factory Method
+<img src="img/factory.png" width="450px"><br>
+
 - 일련의 클래스들 중 하나에서 객체를 인스턴스화하는 기능을 제공합니다.
 - 공통의 수퍼 클래스나, 프로토콜을 준수하는 일련의 클래스들 중 runtime 시 필요로 하는 클래스를 사용할 수 있도록 도와줍니다.
 
 ### Builder
+<img src="img/builder.png" width="500px"><br>
+
 - 인스턴스 생성시 필요한 복잡한 작업들을 간소화하도록 도와줍니다.
 - 인스턴스에 다양한 프로퍼티가 존재할 때 특정 프러퍼티들을 설정하므로써 특성이 다른 인스턴스를 쉽게 생성해낼 수 있습니다.
 - 복잡한 인스턴스 생성을 한 번에 하는 대신 step-by-step 으로 생성하고자 할 때 사용합니다.
@@ -360,7 +370,9 @@ func makeMapMarker(color: Color, theme: Theme, selected: Bool) -> UIImage {
 ## Structural Pattern(구조 패턴)
 - Adaptor, Bridge, Composite, Decorator, Facade, Flyweight, MVC, MVVM, Proxy
 
-### Adaptor
+### Adapter
+<img src="img/adapter.png" width="350px"><br>
+
 - interface 가 상이한 클래스간 호환성을 위해 Wrapper 를 생성하여 클래스간 소통할 수 있도록 합니다.
 - 이미 구현이 완료된 이후 third party library 를 사용하는 등의 상황 발생시 적용할 수 있습니다.
 
@@ -375,15 +387,21 @@ func makeMapMarker(color: Color, theme: Theme, selected: Bool) -> UIImage {
 - swift 에서는 extension, delegation 등을 예로 들 수 있습니다.
 
 ### Facade
+<img src="img/facade.png" width="450px"><br>
+
 - 내부 구현을 숨기고 간결한 interface 를 제공하여 사용의 편의성을 높여줍니다.
 
 ### MVC
+<img src="img/mvc.png" width="450px"><br>
+
 - 가장 많이 사용되고 특히 UIKit 에서 상당한 비중을 차지하는 패턴입니다. 
     - Model: data 를 뜻하며 struct 나 간단한 class 로 구성됩니다.
     - View: 화면에 보여지는 컨트롤 등을 뜻합니다.
     - Controller: model 과 view 를 중계하는 역할입니다. 하나 이상의 model 과 view 를 가질 수 있습니다. model 과 view 에 대한 강한 참조를 가지며 양쪽 모두에 direct 로 접근할 수 있습니다. 하지만 model 과 view 는 controller 에 대해 약한 참조를 가져야 합니다. 그렇지 않으면 strong reference cycle 에 빠지게 됩니다. property observing 을 통해 model 과 통신하고, IBAction 을 통해 view 와 통신합니다.
 
 ### MVVM
+<img src="img/mvvm.png" width="500px"><br>
+
 - MVC 로 개발을 하다보면 model 과 view 가 증가함에 따라 점점 controller 가 해야할 일들이 많아지게되며 코드량도 증가하게 됩니다. 흔히 이런 경우 MVC 를 Massive View Controller 라고 장난삼아 부르게 되죠. 이러한 문제를 해결하기 위해 controller 의 role 을 최대한 줄이며 해당 기능을 ViewModel 이라는 개체로 옮겨서 Model-View-ViewModel 이라고 부르게 됩니다.
     - Model, View 는 MVC 와 동일합니다.
     - View model: model 의 정보를 view 에서 원하는 방식으로 값으로 변경하는 역할을 합니다.
@@ -403,10 +421,14 @@ func makeMapMarker(color: Color, theme: Theme, selected: Bool) -> UIImage {
 - sender 는 receiver 의 interface 에 대해 알지 못하며 request 를 호출할 뿐입니다.
 
 ### Iterator
+<img src="img/iterator.png" width="200px"><br>
+
 - 객체들의 그룹에서 요소들을 탐색할 수 있도록 도와줍니다. 
 - swift 에서는 Sequence protocol 을 준수하여 쉽게 구현할 수 있습니다.(또는 Collection protocol 을 준수하여 좀 더 많은 기능을 구현할 수 있습니다.)
 
 ### Memento
+<img src="img/memento.png" width="500px"><br>
+
 - 객체를 이전 상태로 복원할 수 있는 기능을 제공해줍니다.
 - 객체의 원본 상태 그대로를 가지는 originator 를 가지고, 외부로 스냅샷을 제공하는 클래스(memento)를 추가합니다. caretaker 를 통해 이전상태를 복원할 수 있습니다.
 - originator: Codable 을 준수하는 모델 객체
@@ -414,6 +436,8 @@ func makeMapMarker(color: Color, theme: Theme, selected: Bool) -> UIImage {
 - caretaker: decoder, encoder 를 가지고 저장/복원하는 manager 객체
 
 ### Observer
+<img src="img/observer.png" width="450px"><br>
+
 - 어떤 객체의 상태가 바뀌면 관련된 모든 객체들이 자동으로 갱신되도록 객체들간의 링크를 정의합니다.
 - 주로 MVC 와 함께 사용됩니다. view controller 가 observer 가 되고, model 이 subject 가 되어 view controller 의 type 이 무엇이든 상관하지 않고 서로 소통할 수 있습니다.
 - swift 에서 일대다 옵저버는 notification, kvo, 일대일 옵저버는 delegate 가 있습니다.
@@ -422,12 +446,16 @@ func makeMapMarker(color: Color, theme: Theme, selected: Bool) -> UIImage {
     - delegate 는 매우 유용하지만 과용하면 너무 많은 delegate 들이 생성되는 문제가 발생합니다. 이런 경우 해당 개체가 너무 많은 기능을 담고 있는 것은 아닌지 검토해서 가능하다면 기능을 쪼개는 것이 좋습니다. 그리고 delegate 가 너무 작은 기능을 담당해서 그 수가 많아진 것은 아닌지도 검토해볼 필요가 있습니다. 그렇다면 용도에 맞게 다시 기능을 분류하고 delegate 들을 통합할 필요가 있습니다.
 
 ### Strategy
+<img src="img/strategy.png" width="450px"><br>
+
 - 객체들에 서로 다른 행위가(알고리즘이) 적용되어야 할 때 사용합니다.
 - 행위(알고리즘)의 집합을 정의하고 이들을 필요에 따라 교체할 수 있도록 구현합니다.
 - 클라이언트와 행위를(알고리즘을) 서로 독집적으로 만듭니다.
 - protocol 을 이용하여 구현할 경우 delegate 와 유사해 보이지만, delegate 와 다르게 protocol 을 준수하는 객체들의 집합을 이용하여 runtime 에 쉽게 변경 가능하다는 차이점이 있습니다.
 
 ### State
+<img src="img/state.png" width="450px"><br>
+
 - 객체가 내부 상태(Context)에 따라 서로 다른 방식으로 동작하도록 합니다.
 - Context 의 request 가 호출될 때마다 메시지를 처리하는 State 에 위임됩니다.
 - State interface 는 모든 구체화된 상태들에 대한 공통 interface 를 정의하여 특정 상태와 관련된 모든 동작을 캡슐화합니다.
