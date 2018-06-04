@@ -215,6 +215,7 @@ func setMyValue(_ value: Int) {
     1. 메모리 할딩이 stack 인지, heap 인지
     2. reference counting 이 필요하지 않은지, 필요한지
     3. method dispatch 가 static 인지, dynamic 인지(메서드 호출을(참조를) compile time 에 하는지, run time 에 하는지)
+       [method dispatch 를 쉽게 설명하는 영상](https://www.skilled.io/u/purpleyay/why-swift-is-swift)
 
 - heap 할당의 문제
     : 할당시 빈 곳을 찾고 관리하는 것은 복잡한 과정이 필요합니다.
