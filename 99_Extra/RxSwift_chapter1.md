@@ -177,9 +177,3 @@ toggleSwitch.rx.isOn
 ```
 
 
-
-
-
-
-
-
