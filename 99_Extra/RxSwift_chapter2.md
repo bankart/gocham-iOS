@@ -13,7 +13,7 @@
 
 
 ### Lifecycle of Observable
-- Observable 이 원소를 방출시키면 next 이벤트로 동일한 원소가 방출됩니다.
+- Observable 이 요소를 방출시키면 next 이벤트로 동일한 요소가 방출됩니다.
 
 - 아래의 marble 다이어그램은 위의 다이어그램과 다르게 오른쪽 끝에 관찰이 끝남을 표시하는 세로바가 있습니다.
 
@@ -27,7 +27,7 @@
 
 
 ### Quick Recap
-- observable 은 원소를 담고있는 next 이벤트를 방출시킵니다. error 이벤트가 방출되어 종료되거나, complete 이벤트가 방출되어 종료될 때까지 지속될 수 있습니다.
+- observable 은 요소를 담고있는 next 이벤트를 방출시킵니다. error 이벤트가 방출되어 종료되거나, complete 이벤트가 방출되어 종료될 때까지 지속될 수 있습니다.
 
 - observable 이 종료되면 더이상 이벤트가 방출되지 않습니다.
 
@@ -43,23 +43,23 @@ public enum Event<Element> {
 
 ``` swift
 let one = 1, two = 2, three = 3
-// 단 하나의 원소만 포함하는 observable 을 생성할 때는 Observable 의 type 함수인 just 함수를 사용합니다.
+// 단 하나의 요소만 포함하는 observable 을 생성할 때는 Observable 의 type 함수인 just 함수를 사용합니다.
 let observable: Observable<Int> = Observable<Int>.just(one)
-// Rx 의 함수들은 operators 로 간주됩니다. 위에서는 하나의 원소만 포함하는 operator 였다면 
-// 아래는 여러개의 원소를 포함하는 observable 을 생성하는 예입니다.
+// Rx 의 함수들은 operators 로 간주됩니다. 위에서는 하나의 요소만 포함하는 operator 였다면 
+// 아래는 여러개의 요소를 포함하는 observable 을 생성하는 예입니다.
 let observable2 = Observable.of(one, two, three)
 ```
 
 - 여러개의 Int 를 지정하기 때문에 observable2 는 [Observable<Int>] 라고 생각할 수 있지만 추론된 유형을 확인해보면 Observable<Int> 입니다. playground 파일에서 Option + click 하여 확인해보세요. api 를 확인해보면 Observable.of(_ elements: Int..., scheduler: ImmediateSchedulerType = default) -> Observable<Int> 로 되어 있고, elements 는 갯수가 정해지지 않은 파라미터로 정의되어 있습니다.(variadic parameter) 로 정의되어 있습니다.
 
-- 만약 observable 배열을 생성하고 싶다면 `let observable2 = Observable.of([one, two, three])` 처럼 사용하면 됩니다. 물론 just operator 도 파라미터를 배열로 전달해도 됩니다. 좀 이상하지만 배열 하나만 전달되므로 결국 배열이라는 단 하나의 원소만 포함하는 observable 을 생성하게 됩니다.
+- 만약 observable 배열을 생성하고 싶다면 `let observable2 = Observable.of([one, two, three])` 처럼 사용하면 됩니다. 물론 just operator 도 파라미터를 배열로 전달해도 됩니다. 좀 이상하지만 배열 하나만 전달되므로 결국 배열이라는 단 하나의 요소만 포함하는 observable 을 생성하게 됩니다.
 
 - 그 외에 from operator 를 사용해서 observable 을 생성할 수 있습니다. 사용예는 아래와 같습니다.
 ``` swift
 let observable4 = Observable.from([one, two, three])
 ```
 
-- from operator 는 배열의 원소들로부터 개별 유형의 인스턴스를 생성합니다. from operator 는 파라미터로 배열만 전달받습니다.
+- from operator 는 배열의 요소들로부터 개별 유형의 인스턴스를 생성합니다. from operator 는 파라미터로 배열만 전달받습니다.
 
 
 ### Subscribing to observables
@@ -165,7 +165,7 @@ observable
 - 지금까지는 명시적으로 변수에 담아둔 observable 로 작업했지만 다양한 범위의 값에서 observable 을 생성할 수도 있습니다.
 
 ``` swift
-// .range operator 로 start 값 부터 count 개의 원소를 가지는 순차적인 observable 을 생성합니다.
+// .range operator 로 start 값 부터 count 개의 요소를 가지는 순차적인 observable 을 생성합니다.
 let observable = Observable<Int>.range(start: 1, count: 10)
 observable
 .subscribe( onNext: { i in
@@ -207,7 +207,7 @@ Observable.of("A", "B", "C")
 
 - 위와 같은 패턴을 가장 많이 사용하게 될텐데, observable 생성 및 구독 후 즉시 dispose bag 에 담는 행위는 직접 수동으로 disposable 을 관리하여 메모리 누수가 방출하는 것을 방지해주기 때문이죠.(혹시 수동으로 관리하더라도 구독후 반환되는 disposable 을 사용하지 않았다면 컴파일러가 경고를 띄우기 때문에 걱정하지 않아도 되긴 합니다.)
 
-- 이전 예제들에서 .next 이벤트의 원소를 이용해 observable 을 생성했지만, 모든 이벤트를 subscribers 에게 전달하는 또 다른 방법으로 create operator 가 있습니다.
+- 이전 예제들에서 .next 이벤트의 요소를 이용해 observable 을 생성했지만, 모든 이벤트를 subscribers 에게 전달하는 또 다른 방법으로 create operator 가 있습니다.
 
 - create operator 는 subscribe 라는 하나의 파라미터만 전달받습니다. subscribe 의 역할은 observable 에 대한 구독 요청에 대한 구현을 제공하는 것입니다. 즉, subscriber 에게 방출될 모든 이벤트를 정의합니다. subscribe 파라미터는 AnyObserver 를 전달받고 Disposable 을 반환하는 escaping closure 입니다. AnyObserver 는 observable 시퀀스에 값 추가를 수월하게 하는 제네릭 타입이며 이는 subscriber 에게 방출됩니다.
 
