@@ -24,7 +24,7 @@ let subscriptionOne = subject
 
 - 위의 예제에서 일어나는 일은 PublishSubject 가 현재의 subscriber 에게만 방출된다는 것입니다. 그렇기 때문에 subscribe 되기 전에 무언가 추가되었다면, 해당 값을 얻어올 수 없습니다. 
 
-- 위이 예제 마지막에 `subject.on(.next("1"))` 를 추가하면 "1" 이라는 문자열이 출력됩니다. subscribe operator 와 동일한 형식으로 on(.next(:)) 으로 새로운 .next 이벤트를 subject 에 추가할 수 있습니다. 축약형식으로 `subject.onNext("2")` 이렇게 사용해도 됩니다.
+- 위 예제 마지막에 `subject.on(.next("1"))` 를 추가하면 "1" 이라는 문자열이 출력됩니다. subscribe operator 와 동일한 형식으로 on(.next(:)) 으로 새로운 .next 이벤트를 subject 에 추가할 수 있습니다. 축약형식으로 `subject.onNext("2")` 이렇게 사용해도 됩니다.
 
 
 ### What are subjects?
@@ -60,10 +60,7 @@ let subscriptionTwo = subject
 // subscriptionTwo 를 생성한다고 해도 아무것도 출력되지 않습니다. 아래의 코드를 추가하면 그제서야 출력이 됩니다.
 subject.on(.next("3"))
 /*
-1
-2
-3
-2) 3
+1, 2, 3, 2) 3
 */
 
 // subscriptionOne 을 처리하고
@@ -71,19 +68,10 @@ subscriptionOne.dispose()
 
 // 이벤트를 추가하면 
 /*
-1
-2
-3
-2) 3
-4
-2) 4
+1, 2, 3, 2) 3, 4, 2) 4
 로 출력되지 않고
 
-1
-2
-3
-2) 3
-2) 4
+1, 2, 3, 2) 3, 2) 4
 로 출력됩니다. 당연하게도 subscriptionOne 이 disposed 되었기 때문이죠
 */
 subject.on(.next("4"))
@@ -115,13 +103,7 @@ subject.onNext("?")
 // 하지만 종료되었다는 이벤트는 수신되어 2), 3) 에 completed 가 출력됩니다.
 
 /*
-1
-2
-3
-2) 3
-2) 4
-2) completed
-3) completed
+1, 2, 3, 2) 3, 2) 4, 2) completed, 3) completed
 */
 ```
 
@@ -133,7 +115,7 @@ subject.onNext("?")
 
 
 ### Working with behavior subjects
-- behavior subjects 는 최신 .next 이벤트를 재생하는 것을 제외하곤 publish subjects 와 비슷하게 동작합니다.
+- behavior subjects 는 최신 .next 이벤트를 replay 하는 것을 제외하곤 publish subjects 와 비슷하게 동작합니다.
 
 <img src="rx_img/marble_diagram_4.png" width="400px"><br>
 
@@ -180,9 +162,7 @@ subject
 .dispose(by: disposeBag)
 
 /*
-1) X
-1) anError
-2) anError
+1) X, 1) anError, 2) anError
 */
 ```
 
@@ -223,10 +203,7 @@ subject
 
 // 여기까지 작성 후 실행하면, 버퍼 사이즈가 2이기 때문에 1은 출력되지 않고 2, 3 만 replay 되어 출력됩니다.
 /*
-1) 2
-1) 3
-2) 2
-2) 3
+1) 2, 1) 3, 2) 2, 2) 3
 */
 
 
@@ -241,23 +218,15 @@ subject
 // 이전 구독의 경우 이미 2, 3 을 replay 했기 때문에 새로 추가된 4 만 출력하고, 
 // 새로 추가된 구독은 마지막 2개의 요소에 대해 replay 되어 출력됩니다.
 /*
-1) 4
-2) 4
-3) 3
-3) 4
+1) 4, 2) 4, 3) 3, 3) 4
 */
 ```
 
 - 위의 예제에서 4번 요소를 추가한 직후 `subject.onError(MyError.anError)` 코드를 추가하한 후 실행하면 결과는 아래와 같습니다.
 
 ``` swift
-1) 4
-2) 4
-1) anError
-2) anError
-3) 3
-3) 4
-3) anError
+1) 4, 2) 4, 1) anError, 2) anError
+3) 3, 3) 4, 3) anError
 ```
 
 - replay subject 는 .error 이벤트로 종료되며, 이미 확인했듯이 이 오류는 새로운 subscriber 로 다시 방출됩니다. 하지만 버퍼도 그대로 남아있기 때문에 stop 이벤트가 다시 방출되기 전에 새로운 subscriber 로 버퍼에 담긴 원소들도 replay 됩니다.
@@ -276,11 +245,23 @@ subject
 
 ### Working with variables
 
-- 앞에서 언급했듯이 Variable 은 BehaviorSubject 를 감싸고 현재 값을 상태로 저장한 것입니다. 현재 값을 "value" 속성으로 접근할 수 있고, 일반적으로 다른 subject 및 observable 과 다르게 이 "value" 속성을 사용해서 새로운 요소를 변수에 설정할 수도 있습니다. 다른 말로 하자면 onNext(:) 를 사용하지 않아도 된다는 것입니다.
+- 앞에서 언급했듯이 Variable 은 BehaviorSubject 를 감싸고 현재 값을 상태로 저장합니다. 현재 값을 "value" 속성으로 접근할 수 있고, 일반적으로 다른 subject 및 observable 과 다르게 이 "value" 속성을 사용해서 새로운 요소를 변수에 설정할 수도 있습니다. 다른 말로 하자면 onNext(:) 를 사용하지 않아도 된다는 것입니다.
 
+- 왜냐하면 behavior subject 를 랩핑했기 때문에 초기 값을 가지고 생성되야 하고 마지막 값 또는 초기값을 새로운 subscriber 에게 replay 합니다. variable 의 바탕이 되는 behavior subject 에 접근하기 위해서는 asObservable() 함수를 호출해야 합니다.
 
+- variable 이 다른 subjects 와 비교해 유니크한 점은 .error 이벤트를 방출하지 않는다는 점입니다. 그렇기 때문에 variable 로부터 .error 이벤트를 수신할 수는 있지만 .error 이벤트를 추가할 수는 없습니다. variable 은 메모리 해제시 자동으로 .completed 이벤트가 방출되므로 수동으로 .completed 이벤트를 추가할 수 없습니다.
 
+``` swift
+let variable = Variable("Initial value")
+let disposeBag = DisposeBag()
 
+variable.value = "New initial value"
+variable.asObservable()
+.subscribe {
+	print(label: "1)", event: $0)
+}
+.dispose(by: disposeBag)
+```
 
 
 

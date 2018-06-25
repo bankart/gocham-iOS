@@ -85,9 +85,7 @@ var iterator = sequence.makeIterator()
 while let n = iterator.next() {
 	print(n)
 	/*
-	0
-	1
-	2
+	0, 1, 2
 	*/
 }
 ```
@@ -103,10 +101,7 @@ observable.subscribe {
 	print(event)
 }
 /*
-next(1)
-next(2)
-next(3)
-completed
+next(1), next(2), next(3), completed
 */
 
 
@@ -231,9 +226,7 @@ Observable<String>.create{ observer in
 )
 .disposed(by: disposeBag)
 /*
- 1
- Completed
- Disposed
+ 1, Completed, Disposed
  */
 ```
 
@@ -281,10 +274,7 @@ for _ in 0...3 {
 	print()
 }
 /*
- 123
- 456
- 123
- 456
+ 123, 456, 123, 456
  */
 ```
 
