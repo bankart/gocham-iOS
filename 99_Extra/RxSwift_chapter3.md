@@ -252,15 +252,23 @@ subject
 - variable 이 다른 subjects 와 비교해 유니크한 점은 .error 이벤트를 방출하지 않는다는 점입니다. 그렇기 때문에 variable 로부터 .error 이벤트를 수신할 수는 있지만 .error 이벤트를 추가할 수는 없습니다. variable 은 메모리 해제시 자동으로 .completed 이벤트가 방출되므로 수동으로 .completed 이벤트를 추가할 수 없습니다.
 
 ``` swift
+// 초기값과 함께 variable 을 생성합니다.
+// 예제는 타입 추론을 사용하였지만 명시적으로 Variable<String>("Initial value") 로 생성해도 됩니다.
 let variable = Variable("Initial value")
 let disposeBag = DisposeBag()
 
+// 새로운 요소를 추가합니다.
 variable.value = "New initial value"
+// 먼저 asObservable() 을 호출하여 behavior subject 에 접근한 후 구독합니다.
+// 이 구독은 마지막 값을 받습니다.
 variable.asObservable()
 .subscribe {
 	print(label: "1)", event: $0)
 }
 .dispose(by: disposeBag)
+/*
+ 1) New initial value
+ */
 ```
 
 
