@@ -21,7 +21,6 @@
 18. [Do you have TDD experience? How do you unit and UI test on iOS?](18_TDD_and_unitTest/18번_질의에_대한_답.md)
 19. Do you code review and/or pair program?
 
-aa
 * * *
 
 99. [Extra](99_Extra)
